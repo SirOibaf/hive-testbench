@@ -109,7 +109,7 @@ done
 
 for t in ${FACTS}
 do
-	COMMAND="beeline -u ${HOST} -n ${USER} ddl-tpcds/bin_partitioned/${t}.sql \
+	COMMAND="beeline -u ${HOST} -n ${USER} -f ddl-tpcds/bin_partitioned/${t}.sql \
 	    --hivevar DB=tpcds_bin_partitioned_${FORMAT}_${SCALE} \
             --hivevar SCALE=${SCALE} \
 	    --hivevar SOURCE=tpcds_text_${SCALE} --hivevar BUCKETS=${BUCKETS} \
