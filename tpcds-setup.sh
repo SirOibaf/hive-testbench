@@ -1,7 +1,7 @@
 #!/bin/bash
 
 function usage {
-	echo "Usage: tpcds-setup.sh scale_factor [temp_directory]"
+	echo "Usage: tpcds-setup.sh scale_factor [temp_directory] [host] [user]"
 	exit 1
 }
 
@@ -17,9 +17,9 @@ if [ ! -f tpcds-gen/target/tpcds-gen-1.0-SNAPSHOT.jar ]; then
 	echo "Please build the data generator with ./tpcds-build.sh first"
 	exit 1
 fi
-which hive > /dev/null 2>&1
+which beeline > /dev/null 2>&1
 if [ $? -ne 0 ]; then
-	echo "Script must be run where Hive is installed"
+	echo "Script must be run where Beeline is installed"
 	exit 1
 fi
 
@@ -30,6 +30,8 @@ FACTS="store_sales store_returns web_sales web_returns catalog_sales catalog_ret
 # Get the parameters.
 SCALE=$1
 DIR=$2
+HOST=$3
+USER=$4
 if [ "X$BUCKET_DATA" != "X" ]; then
 	BUCKETS=13
 	RETURN_BUCKETS=13
@@ -52,6 +54,12 @@ if [ $SCALE -eq 1 ]; then
 	echo "Scale factor must be greater than 1"
 	exit 1
 fi
+if [ X"$HOST" = "X" ]; then
+	USER=jdbc:hive2://localhost:2222
+fi
+if [ X"$USER" = "X" ]; then
+	USER=glassfish
+fi
 
 # Do the actual data load.
 hdfs dfs -mkdir -p ${DIR}
@@ -69,7 +77,7 @@ echo "TPC-DS text data generation complete."
 
 # Create the text/flat tables as external tables. These will be later be converted to ORCFile.
 echo "Loading text data into external tables."
-runcommand "hive -i settings/load-flat.sql -f ddl-tpcds/text/alltables.sql -d DB=tpcds_text_${SCALE} -d LOCATION=${DIR}/${SCALE}"
+runcommand "beeline -u ${HOST} -n ${USER} -f ddl-tpcds/text/alltables.sql --hivevar DB=tpcds_text_${SCALE} --hivevar LOCATION=${DIR}/${SCALE}"
 
 # Create the partitioned and bucketed tables.
 if [ "X$FORMAT" = "X" ]; then
@@ -77,7 +85,7 @@ if [ "X$FORMAT" = "X" ]; then
 fi
 
 LOAD_FILE="load_${FORMAT}_${SCALE}.mk"
-SILENCE="2> /dev/null 1> /dev/null" 
+SILENCE="2> /dev/null 1> /dev/null"
 if [ "X$DEBUG_SCRIPT" != "X" ]; then
 	SILENCE=""
 fi
@@ -91,20 +99,20 @@ DATABASE=tpcds_bin_partitioned_${FORMAT}_${SCALE}
 # Populate the smaller tables.
 for t in ${DIMS}
 do
-	COMMAND="hive -i settings/load-partitioned.sql -f ddl-tpcds/bin_partitioned/${t}.sql \
-	    -d DB=tpcds_bin_partitioned_${FORMAT}_${SCALE} -d SOURCE=tpcds_text_${SCALE} \
-            -d SCALE=${SCALE} \
-	    -d FILE=${FORMAT}"
+	COMMAND="beeline -u ${HOST} -n ${USER} -f ddl-tpcds/bin_partitioned/${t}.sql \
+	    --hivevar DB=tpcds_bin_partitioned_${FORMAT}_${SCALE} --hivevar SOURCE=tpcds_text_${SCALE} \
+            --hivevar SCALE=${SCALE} \
+	    --hivevar FILE=${FORMAT}"
 	echo -e "${t}:\n\t@$COMMAND $SILENCE && echo 'Optimizing table $t ($i/$total).'" >> $LOAD_FILE
 	i=`expr $i + 1`
 done
 
 for t in ${FACTS}
 do
-	COMMAND="hive -i settings/load-partitioned.sql -f ddl-tpcds/bin_partitioned/${t}.sql \
-	    -d DB=tpcds_bin_partitioned_${FORMAT}_${SCALE} \
-            -d SCALE=${SCALE} \
-	    -d SOURCE=tpcds_text_${SCALE} -d BUCKETS=${BUCKETS} \
+	COMMAND="beeline -u ${HOST} -n ${USER} ddl-tpcds/bin_partitioned/${t}.sql \
+	    --hivevar DB=tpcds_bin_partitioned_${FORMAT}_${SCALE} \
+            --hivevar SCALE=${SCALE} \
+	    --hivevar SOURCE=tpcds_text_${SCALE} --hivevar BUCKETS=${BUCKETS} \
 	    -d RETURN_BUCKETS=${RETURN_BUCKETS} -d FILE=${FORMAT}"
 	echo -e "${t}:\n\t@$COMMAND $SILENCE && echo 'Optimizing table $t ($i/$total).'" >> $LOAD_FILE
 	i=`expr $i + 1`
