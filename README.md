@@ -1,12 +1,16 @@
 hive-testbench
 ==============
 
-A testbench for experimenting with Apache Hive at any data scale.
+A fork of the HortonWorks Hive benchmark suite which uses beeline instead of the deprecated hive.
 
 Overview
 ========
 
 The hive-testbench is a data generator and set of queries that lets you experiment with Apache Hive at scale. The testbench allows you to experience base Hive performance on large datasets, and gives an easy way to see the impact of Hive tuning parameters and advanced settings.
+
+
+Original README.md with Instructions
+=============
 
 Prerequisites
 =============
@@ -82,10 +86,3 @@ All of these steps should be carried out on your Hadoop cluster.
   	hive> use tpch_flat_orc_1000;
   	hive> source tpch_query1.sql;
   	```
-
-Feedback
-========
-
-If you have questions, comments or problems, visit the [Hortonworks Hive forum](http://hortonworks.com/community/forums/forum/hive/).
-
-If you have improvements, pull requests are accepted.
