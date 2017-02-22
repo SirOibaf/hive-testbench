@@ -113,7 +113,7 @@ do
 	    --hivevar DB=tpcds_bin_partitioned_${FORMAT}_${SCALE} \
             --hivevar SCALE=${SCALE} \
 	    --hivevar SOURCE=tpcds_text_${SCALE} --hivevar BUCKETS=${BUCKETS} \
-	    -d RETURN_BUCKETS=${RETURN_BUCKETS} -d FILE=${FORMAT}"
+	    --hivevar RETURN_BUCKETS=${RETURN_BUCKETS} --hivevar FILE=${FORMAT}"
 	echo -e "${t}:\n\t@$COMMAND $SILENCE && echo 'Optimizing table $t ($i/$total).'" >> $LOAD_FILE
 	i=`expr $i + 1`
 done
