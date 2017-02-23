@@ -55,7 +55,7 @@ if [ $SCALE -eq 1 ]; then
 	exit 1
 fi
 if [ X"$HOST" = "X" ]; then
-	USER=jdbc:hive2://localhost:2222
+	HOST=jdbc:hive2://localhost:2222
 fi
 if [ X"$USER" = "X" ]; then
 	USER=glassfish
