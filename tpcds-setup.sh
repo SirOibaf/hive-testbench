@@ -85,7 +85,6 @@ if [ "X$FORMAT" = "X" ]; then
 fi
 
 LOAD_FILE="load_${FORMAT}_${SCALE}.mk"
-SILENCE="2> /dev/null 1> /dev/null"
 if [ "X$DEBUG_SCRIPT" != "X" ]; then
 	SILENCE=""
 fi
@@ -103,7 +102,7 @@ do
 	    --hivevar DB=tpcds_bin_partitioned_${FORMAT}_${SCALE} --hivevar SOURCE=tpcds_text_${SCALE} \
             --hivevar SCALE=${SCALE} \
 	    --hivevar FILE=${FORMAT}"
-	echo -e "${t}:\n\t@$COMMAND $SILENCE && echo 'Optimizing table $t ($i/$total).'" >> $LOAD_FILE
+	echo -e "${t}:\n\t@$COMMAND && echo 'Optimizing table $t ($i/$total).'" >> $LOAD_FILE
 	i=`expr $i + 1`
 done
 
@@ -114,7 +113,7 @@ do
             --hivevar SCALE=${SCALE} \
 	    --hivevar SOURCE=tpcds_text_${SCALE} --hivevar BUCKETS=${BUCKETS} \
 	    --hivevar RETURN_BUCKETS=${RETURN_BUCKETS} --hivevar FILE=${FORMAT}"
-	echo -e "${t}:\n\t@$COMMAND $SILENCE && echo 'Optimizing table $t ($i/$total).'" >> $LOAD_FILE
+	echo -e "${t}:\n\t@$COMMAND && echo 'Optimizing table $t ($i/$total).'" >> $LOAD_FILE
 	i=`expr $i + 1`
 done
 
